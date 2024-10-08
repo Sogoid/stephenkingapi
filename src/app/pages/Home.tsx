@@ -1,4 +1,5 @@
 import {Picker} from '@react-native-picker/picker';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import React, {useEffect, useRef, useState} from 'react';
 import {
   Animated,
@@ -10,25 +11,74 @@ import {
   TextStyle,
   View,
 } from 'react-native';
-import {Books} from '../../model/books';
-import {
-  fetchBooksDetail,
-  fetchBooksList,
-} from '../../service/StephenKingService'; // Certifique-se de ajustar o caminho conforme necessário
+import {Data} from '../../model/books';
+import {RootStackParamList} from '../../router/routes';
+import {fetchBooksList} from '../../service/StephenKingService'; // Certifique-se de ajustar o caminho conforme necessário
 import BookList from '../components/BookList';
 
-const Home: React.FC = () => {
+type HomeNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  'Dashboard'
+>;
+
+type Props = {
+  navigation: HomeNavigationProp;
+};
+
+export default function Home({}: Props) {
   const animatedSearchIsFocused = useRef(new Animated.Value(0)).current;
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [searchValue, setSearchValue] = useState('');
-  const [bookList, setBookList] = useState<Books[]>([]);
-  const [filteredBooks, setFilteredBooks] = useState<Books[]>([]);
-  const [offset, setOffset] = useState(0);
-  const [limit] = useState(100);
+  const [_bookList, setBookList] = useState<Data[]>([]);
+  const [filteredBooks, setFilteredBooks] = useState<Data[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchType, setSearchType] = useState<'name' | 'publisher'>('name');
+  const booksPerPage = 10;
+  const [currentPage, setCurrentPage] = useState(1);
 
   const Separator = () => <View style={styles.separator} />;
+
+  useEffect(() => {
+    const loadBooks = async () => {
+      try {
+        setLoading(true);
+        const fetchedBooks: Data[] = await fetchBooksList();
+        console.log('Dados recebidos da API:', fetchedBooks);
+
+        const filteredBookList = fetchedBooks.filter(book => {
+          if (searchType === 'name') {
+            return book.title
+              ?.toLowerCase()
+              .includes(searchValue.toLowerCase());
+          } else if (searchType === 'publisher') {
+            return book.publisher
+              ?.toLowerCase()
+              .includes(searchValue.toLowerCase());
+          }
+          return false;
+        });
+
+        setBookList(fetchedBooks); // Certifique-se de que bookList está sendo usado
+        setFilteredBooks(filteredBookList);
+      } catch (error) {
+        console.error('Error fetching book list:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadBooks();
+  }, [searchValue, searchType]);
+
+  const indexOfLastBook = currentPage * booksPerPage;
+  const indexOfFirstBook = indexOfLastBook - booksPerPage;
+  const displayedBooks = filteredBooks.slice(indexOfFirstBook, indexOfLastBook);
+
+  const loadMoreBooks = () => {
+    if (indexOfLastBook < filteredBooks.length) {
+      setCurrentPage(prevPage => prevPage + 1);
+    }
+  };
 
   useEffect(() => {
     Animated.timing(animatedSearchIsFocused, {
@@ -38,61 +88,6 @@ const Home: React.FC = () => {
       useNativeDriver: false,
     }).start();
   }, [animatedSearchIsFocused, isSearchFocused, searchValue]);
-
-  useEffect(() => {
-    const loadBooks = async () => {
-      try {
-        const data = await fetchBooksList(offset, limit);
-        const detailedBookList = await Promise.all(
-          data.map(async book => {
-            const details = await fetchBooksDetail(book.id.toString());
-            return {
-              data: {
-                id: details.id,
-                Year: details.Year,
-                title: details.title,
-                handle: details.handle,
-                publisher: details.publisher,
-                isbn: details.isbn,
-                pages: details.pages,
-                notes: details.notes,
-                villains: details.villains,
-              },
-            };
-          }),
-        );
-        setBookList(prevList => [...prevList, ...detailedBookList]);
-        setOffset(prevOffset => prevOffset + limit);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadBooks();
-  }, [offset, limit]);
-
-  useEffect(() => {
-    const filtered = bookList.filter((book: Books) => {
-      if (searchType === 'name') {
-        return book.data.title
-          ?.toLowerCase()
-          .includes(searchValue?.toLowerCase() || '');
-      } else if (searchType === 'publisher') {
-        return book.data.publisher
-          ?.toLowerCase()
-          .includes(searchValue?.toLowerCase() || '');
-      }
-      return false;
-    });
-    setFilteredBooks(filtered);
-  }, [searchValue, searchType, bookList]);
-
-  const loadMoreBooks = () => {
-    setLoading(true);
-    setOffset(prevOffset => prevOffset + limit);
-  };
 
   const usersearchLabelStyle: Animated.WithAnimatedObject<TextStyle> = {
     fontFamily: 'WendyOne-Regular',
@@ -166,7 +161,7 @@ const Home: React.FC = () => {
         <Separator />
         <View>
           <BookList
-            books={filteredBooks.map(book => book.data)}
+            books={displayedBooks} // Mapeando para o tipo correto
             loading={loading}
             loadMoreBooks={loadMoreBooks}
           />
@@ -174,7 +169,7 @@ const Home: React.FC = () => {
       </View>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   header: {
@@ -221,10 +216,10 @@ const styles = StyleSheet.create({
     width: 130,
     backgroundColor: '#D9D9D9',
     color: 'black',
-    fontFamily: 'WendyOne-Regular',
   },
   pickerItem: {
     fontSize: 16,
+    fontFamily: 'WendyOne-Regular',
   },
   separator: {
     marginVertical: 8,
@@ -232,5 +227,3 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
 });
-
-export default Home;

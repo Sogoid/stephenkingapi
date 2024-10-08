@@ -1,34 +1,29 @@
 import React from 'react';
 import {Alert, Button, StyleSheet, Text, View} from 'react-native';
-import {Villain} from '../../model/books';
 
 interface BookCardProps {
   title: string;
   publisher: string;
   isbn: string;
   pages: number;
-  notes: string[];
-  villains: Villain[];
 }
 
-const BookCard: React.FC<BookCardProps> = ({
-  title,
-  publisher,
-  isbn,
-  pages,
-  notes,
-  villains,
-}) => {
+const BookCard: React.FC<BookCardProps> = ({title, publisher, isbn, pages}) => {
+  // Log das propriedades recebidas
+  console.log('Propriedades recebidas no BookCard:', {
+    title,
+    publisher,
+    isbn,
+    pages,
+  });
+
   return (
     <View style={styles.card}>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.publisher}>Publisher: {publisher}</Text>
       <Text style={styles.isbn}>ISBN: {isbn}</Text>
       <Text style={styles.pages}>Pages: {pages}</Text>
-      <Text style={styles.notes}>Notes: {notes.join(', ')}</Text>
-      <Text style={styles.villains}>
-        Villains: {villains.map(v => v.name).join(', ')}
-      </Text>
+
       <Button
         title="Info"
         color="#999999"

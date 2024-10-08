@@ -1,7 +1,3 @@
-export interface Books {
-  data: Data;
-}
-
 export interface Data {
   id: number;
   Year: number;

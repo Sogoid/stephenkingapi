@@ -6,11 +6,11 @@ import {
   Text,
   View,
 } from 'react-native';
-import {Books} from '../../model/books'; // Importando a interface Books
-import BookCard from './BookCard'; // Assuming you have a BookCard component
+import {Data} from '../../model/books';
+import BookCard from './BookCard';
 
 interface BookListProps {
-  books: Books['data'][];
+  books: Data[];
   loading: boolean;
   loadMoreBooks: () => void;
 }
@@ -24,15 +24,12 @@ const BookList: React.FC<BookListProps> = ({books, loading, loadMoreBooks}) => {
       ) : (
         <FlatList
           data={books}
-          keyExtractor={item => item.id.toString()}
           renderItem={({item}) => (
             <BookCard
               title={item.title}
               publisher={item.publisher}
               isbn={item.isbn}
               pages={item.pages}
-              notes={item.notes}
-              villains={item.villains}
             />
           )}
           numColumns={2} // Define o número de colunas
