@@ -6,11 +6,21 @@ import {
   Text,
   View,
 } from 'react-native';
-import {Data} from '../../model/books';
+import {Villain} from '../../model/books';
 import BookCard from './BookCard';
 
 interface BookListProps {
-  books: Data[];
+  books: {
+    id: number;
+    Year: number;
+    title: string;
+    handle: string;
+    publisher: string;
+    isbn: string;
+    pages: number;
+    notes: string[];
+    villains: Villain[];
+  }[];
   loading: boolean;
   loadMoreBooks: () => void;
 }
@@ -24,6 +34,7 @@ const BookList: React.FC<BookListProps> = ({books, loading, loadMoreBooks}) => {
       ) : (
         <FlatList
           data={books}
+          keyExtractor={item => item.id.toString()}
           renderItem={({item}) => (
             <BookCard
               title={item.title}

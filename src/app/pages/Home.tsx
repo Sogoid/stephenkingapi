@@ -29,56 +29,58 @@ export default function Home({}: Props) {
   const animatedSearchIsFocused = useRef(new Animated.Value(0)).current;
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [searchValue, setSearchValue] = useState('');
-  const [_bookList, setBookList] = useState<Data[]>([]);
+  const [bookList, setBookList] = useState<Data[]>([]);
   const [filteredBooks, setFilteredBooks] = useState<Data[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [searchType, setSearchType] = useState<'name' | 'publisher'>('name');
-  const booksPerPage = 10;
-  const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(true); // Correção aqui
+  const [searchType, setSearchType] = useState<'title' | 'publisher'>('title');
 
   const Separator = () => <View style={styles.separator} />;
 
   useEffect(() => {
     const loadBooks = async () => {
       try {
-        setLoading(true);
-        const fetchedBooks: Data[] = await fetchBooksList();
-        console.log('Dados recebidos da API:', fetchedBooks);
+        const data = await fetchBooksList();
 
-        const filteredBookList = fetchedBooks.filter(book => {
-          if (searchType === 'name') {
-            return book.title
-              ?.toLowerCase()
-              .includes(searchValue.toLowerCase());
-          } else if (searchType === 'publisher') {
-            return book.publisher
-              ?.toLowerCase()
-              .includes(searchValue.toLowerCase());
-          }
-          return false;
-        });
-
-        setBookList(fetchedBooks); // Certifique-se de que bookList está sendo usado
-        setFilteredBooks(filteredBookList);
+        const detailedBookList = data.map(book => ({
+          id: book.id,
+          Year: book.Year,
+          title: book.title,
+          handle: book.handle,
+          publisher: book.publisher,
+          isbn: book.isbn,
+          pages: book.pages,
+          notes: book.notes,
+          villains: book.villains,
+        }));
+        setBookList(prevList => [...prevList, ...detailedBookList]);
       } catch (error) {
-        console.error('Error fetching book list:', error);
+        console.error(error);
       } finally {
         setLoading(false);
       }
     };
 
     loadBooks();
-  }, [searchValue, searchType]);
+  }, []);
 
-  const indexOfLastBook = currentPage * booksPerPage;
-  const indexOfFirstBook = indexOfLastBook - booksPerPage;
-  const displayedBooks = filteredBooks.slice(indexOfFirstBook, indexOfLastBook);
+  useEffect(() => {
+    const filtered = bookList.filter((book: Data) => {
+      if (searchType === 'title') {
+        return (
+          book.title &&
+          book.title.toLowerCase().includes(searchValue.toLowerCase())
+        );
+      } else if (searchType === 'publisher') {
+        return (
+          book.publisher &&
+          book.publisher.toLowerCase().includes(searchValue.toLowerCase())
+        );
+      }
+      return false;
+    });
 
-  const loadMoreBooks = () => {
-    if (indexOfLastBook < filteredBooks.length) {
-      setCurrentPage(prevPage => prevPage + 1);
-    }
-  };
+    setFilteredBooks(filtered);
+  }, [searchValue, searchType, bookList]);
 
   useEffect(() => {
     Animated.timing(animatedSearchIsFocused, {
@@ -121,6 +123,10 @@ export default function Home({}: Props) {
     textTransform: 'uppercase',
   };
 
+  const loadMoreBooks = () => {
+    setLoading(true);
+  };
+
   return (
     <View>
       <View style={styles.header}>
@@ -147,10 +153,15 @@ export default function Home({}: Props) {
           <Picker
             selectedValue={searchType}
             style={styles.picker}
-            onValueChange={(itemValue: 'name' | 'publisher') =>
+            onValueChange={(itemValue: 'title' | 'publisher') =>
               setSearchType(itemValue)
             }>
-            <Picker.Item label="NOME" value="name" style={styles.pickerItem} />
+            <Picker.Item
+              label="TITULO"
+              value="title"
+              style={styles.pickerItem}
+            />
+
             <Picker.Item
               label="EDITORA"
               value="publisher"
@@ -161,7 +172,7 @@ export default function Home({}: Props) {
         <Separator />
         <View>
           <BookList
-            books={displayedBooks} // Mapeando para o tipo correto
+            books={filteredBooks}
             loading={loading}
             loadMoreBooks={loadMoreBooks}
           />
