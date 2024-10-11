@@ -11,7 +11,7 @@ import {
   TextStyle,
   View,
 } from 'react-native';
-import {Data} from '../../model/books';
+import {Daum} from '../../model/books';
 import {RootStackParamList} from '../../router/routes';
 import {fetchBooksList} from '../../service/StephenKingService'; // Certifique-se de ajustar o caminho conforme necessário
 import BookList from '../components/BookList';
@@ -29,8 +29,8 @@ export default function Home({}: Props) {
   const animatedSearchIsFocused = useRef(new Animated.Value(0)).current;
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [searchValue, setSearchValue] = useState('');
-  const [bookList, setBookList] = useState<Data[]>([]);
-  const [filteredBooks, setFilteredBooks] = useState<Data[]>([]);
+  const [bookList, setBookList] = useState<Daum[]>([]);
+  const [filteredBooks, setFilteredBooks] = useState<Daum[]>([]);
   const [loading, setLoading] = useState(true); // Correção aqui
   const [searchType, setSearchType] = useState<'title' | 'publisher'>('title');
 
@@ -39,20 +39,8 @@ export default function Home({}: Props) {
   useEffect(() => {
     const loadBooks = async () => {
       try {
-        const data = await fetchBooksList();
-
-        const detailedBookList = data.map(book => ({
-          id: book.id,
-          Year: book.Year,
-          title: book.title,
-          handle: book.handle,
-          publisher: book.publisher,
-          isbn: book.isbn,
-          pages: book.pages,
-          notes: book.notes,
-          villains: book.villains,
-        }));
-        setBookList(prevList => [...prevList, ...detailedBookList]);
+        const data: Daum[] = await fetchBooksList(); // fetchBooksList retorna diretamente um array de Daum[]
+        setBookList(data); // Atribua diretamente o array de livros
       } catch (error) {
         console.error(error);
       } finally {
@@ -64,16 +52,16 @@ export default function Home({}: Props) {
   }, []);
 
   useEffect(() => {
-    const filtered = bookList.filter((book: Data) => {
+    const filtered = bookList.filter((book: Daum) => {
       if (searchType === 'title') {
         return (
-          book.title &&
-          book.title.toLowerCase().includes(searchValue.toLowerCase())
+          book.Title &&
+          book.Title.toLowerCase().includes(searchValue.toLowerCase())
         );
       } else if (searchType === 'publisher') {
         return (
-          book.publisher &&
-          book.publisher.toLowerCase().includes(searchValue.toLowerCase())
+          book.Publisher &&
+          book.Publisher.toLowerCase().includes(searchValue.toLowerCase())
         );
       }
       return false;

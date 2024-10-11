@@ -6,21 +6,11 @@ import {
   Text,
   View,
 } from 'react-native';
-import {Villain} from '../../model/books';
+import {Daum} from '../../model/books';
 import BookCard from './BookCard';
 
 interface BookListProps {
-  books: {
-    id: number;
-    Year: number;
-    title: string;
-    handle: string;
-    publisher: string;
-    isbn: string;
-    pages: number;
-    notes: string[];
-    villains: Villain[];
-  }[];
+  books: Daum[]; // Use a interface Daum aqui
   loading: boolean;
   loadMoreBooks: () => void;
 }
@@ -37,10 +27,10 @@ const BookList: React.FC<BookListProps> = ({books, loading, loadMoreBooks}) => {
           keyExtractor={item => item.id.toString()}
           renderItem={({item}) => (
             <BookCard
-              title={item.title}
-              publisher={item.publisher}
-              isbn={item.isbn}
-              pages={item.pages}
+              title={item.Title}
+              publisher={item.Publisher}
+              isbn={item.ISBN}
+              pages={item.Pages}
             />
           )}
           numColumns={2} // Define o número de colunas
